@@ -4,11 +4,10 @@ import pandas as pd
 import spacy
 from spacy import displacy
 import en_core_web_md
-import json 
+import json
 
-# @TASK : Load model bahasa 
+# Load language model. use english core web medium
 nlp = en_core_web_md.load()
-# END OF TASK 
 
 app = Flask(__name__)
 
@@ -28,13 +27,12 @@ def process():
                 d.append((ent.label_, ent.text))
                 df = pd.DataFrame(d, columns=['category', 'value'])
 
-                # @TASK : COMPLETE THE FOLLOWING CODES
-                # ! df.query pake subsetting juga bisa
-                ORG_named_entity = df.query("category == 'ORG'")['value'] # Subset semua entitas dengan kategori 'ORG'
-                PERSON_named_entity = df.query("category == 'PERSON'")['value'] # Subset semua entitas dengan kategori 'PERSON'
-                GPE_named_entity = df.query("category == 'GPE'")['value'] # Subset semua entitas dengan kategori 'GPE'
-                MONEY_named_entity = df.query("category == 'MONEY'")['value'] # Subset semua entitas dengan kategori 'MONEY'
-                # END OF TASK 
+                # subsetting
+                ORG_named_entity = df[df['category'] == 'ORG']['value'] # Subset semua entitas dengan kategori 'ORG'
+                PERSON_named_entity = df[df['category'] == 'PERSON']['value'] # Subset semua entitas dengan kategori 'PERSON'
+                GPE_named_entity = df[df['category'] == 'GPE']['value'] # Subset semua entitas dengan kategori 'GPE'
+                MONEY_named_entity = df[df['category'] == 'MONEY']['value'] # Subset semua entitas dengan kategori 'MONEY'
+                
 
             if choice == 'organization':
                 results = ORG_named_entity
@@ -57,10 +55,6 @@ def process():
 
     return render_template("index.html",results=results,num_of_results = num_of_results, original_text = rawtext)
 
-
-
-
-
 @app.route('/endpoint_tertentu')
 def nama_fungsi_tertentu():
     # secara teknis, kita dapat melakukan apapun dalam fungsi ini 
@@ -81,10 +75,9 @@ def multi_method():
     else : 
         return ("Nilai ini akan dikembalikan jika endpoint ini diakses dengan method GET")
 
-
 @app.route('/tes_send_json', methods=['POST'])
 def tes_send_json():
-    data = request.get_json() # proses membaca json yang dikirim 
+    data = request.get_json() # read the json
     nama = data['nama']
     usia = data['usia']
     pekerjaan = data['pekerjaan']
@@ -92,11 +85,10 @@ def tes_send_json():
 
 @app.route('/tes_return_json', methods=['POST'])
 def tes_return_json():
-    data = request.get_json() # proses membaca json yang dikirim 
-    df = pd.DataFrame([data]) # mengolah data menjadi dataframe
+    data = request.get_json() 
+    df = pd.DataFrame([data]) # put it as a dataframe
 
-    return (df.to_json()) # mengembalikan dataframe dalam bentuk json
-
+    return (df.to_json()) # returning in json format
 
 #task endpoint
 @app.route('/get_entities', methods=['POST'])
@@ -119,21 +111,20 @@ def get_entities():
     
     return (df.to_json())
 
-
 #task bonus
 @app.route('/get_entities_normalized', methods=['POST'])
-def get_entities_normalizedfoo():
-    data = request.get_json() # load received json data
-    text = data['text'] # extract 'text' element 
-    doc = nlp(text) #
+def get_entities_normalized():
+    data = request.get_json()
+    text = data['text'] 
+    doc = nlp(text) 
     d = [(ent.label_, ent.text) for ent in doc.ents]
     df = pd.DataFrame(d, columns=['category', 'value'])
     dictionary = {}
+    # below is where we group values under same category
     for i in df['category'].unique():
         values = df.query(f"category == '{i}' ")['value'].to_list()
         dictionary[i] = values
     return json.dumps(dictionary)
-
 
 
 if __name__ == '__main__':
